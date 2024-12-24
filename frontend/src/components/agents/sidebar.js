@@ -7,6 +7,7 @@ export default function Sidebar() {
     const pathname = usePathname();
   
     const menuItems = [
+        { name: "Dashboard", icon: <HomeIcon className="w-6 h-6" />, path: "/dashboard" },
         { name: "Agents", icon: <UserGroupIcon className="w-6 h-6" />, path: "/agents" },
         { name: "Challenges", icon: <ChatBubbleLeftRightIcon className="w-6 h-6" />, path: "/challenges" },
         { name: "Progress", icon: <ChartBarIcon className="w-6 h-6" />, path: "/progress" },
