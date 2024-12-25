@@ -13,7 +13,7 @@ export default {
         background: '#141414',
         background_secondary: '#0A0A0A',
         text: '#FCF7FF',
-        textSecondary: "#A8A8A8",
+        textSecondary: "#D8D8D8",
         error: '#FF4D4F',
       },
       fontFamily: {

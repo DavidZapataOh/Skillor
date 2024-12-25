@@ -1,11 +1,11 @@
 'use client';
 
-import Sidebar from "@/components/agents/sidebar";
-import Header from "@/components/agents/header";
-import MainContent from "@/components/agents/mainContent";
+import Sidebar from "@/components/common/sidebar";
+import Header from "@/components/common/header";
+import MainContent from "@/components/progress/mainContent";
 import { useAuth } from "@crossmint/client-sdk-react-ui";
 
-export default function Agents() {
+export default function Progress() {
   return (
     <div className="flex bg-background min-h-screen text-secondary font-sans">
       <Sidebar />
