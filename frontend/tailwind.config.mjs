@@ -12,7 +12,6 @@ export default {
         secondary: '#466600',
         background: '#141414',
         background_secondary: '#0A0A0A',
-        card: '#0E1400',
         text: '#FCF7FF',
         textSecondary: "#A8A8A8",
         error: '#FF4D4F',
