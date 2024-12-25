@@ -42,7 +42,7 @@ export default function MainContent() {
         {agents.map((agent, index) => (
           <div 
             key={index}
-            className="relative bg-card rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border-1 border-muted"
+            className="relative bg-background rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border-1 border-muted"
           >
             <div className="aspect-square">
               <img
@@ -67,7 +67,7 @@ export default function MainContent() {
                     Available
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-card text-textSecondary border-1 border-muted">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-background text-textSecondary border-1 border-muted">
                     Coming Soon
                   </span>
                 )}
