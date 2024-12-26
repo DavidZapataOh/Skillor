@@ -7,7 +7,7 @@ import { useAuth } from "@crossmint/client-sdk-react-ui";
 
 export default function Challenges() {
   return (
-    <div className="flex bg-background min-h-screen text-secondary font-sans">
+    <div className="flex bg-background_secondary min-h-screen text-secondary font-sans">
       <Sidebar />
       <div className="flex-1">
         <Header />
