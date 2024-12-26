@@ -1,7 +1,8 @@
 'use client';
 import { useRouter, usePathname } from "next/navigation";
-import { HomeIcon, ChartBarIcon, CogIcon, ClockIcon, ChatBubbleLeftRightIcon, UserGroupIcon  } from "@heroicons/react/24/outline";
-import { FaTwitter, FaDiscord, FaGithub } from "react-icons/fa";
+import { HomeIcon, ChartBarIcon, CogIcon, ClockIcon, ChatBubbleLeftRightIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { FaGithub } from "react-icons/fa";
+import { RiTwitterXFill } from "react-icons/ri";
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -13,10 +14,9 @@ export default function Sidebar() {
         { name: "Progress", icon: <ChartBarIcon className="w-6 h-6" />, path: "/progress" },
     ];  
     
-      const socialLinks = [
-        { name: "Twitter", icon: <FaTwitter className="w-5 h-5" />, link: "https://twitter.com" },
-        { name: "Discord", icon: <FaDiscord className="w-5 h-5" />, link: "https://discord.com" },
-        { name: "GitHub", icon: <FaGithub className="w-5 h-5" />, link: "https://github.com" },
+    const socialLinks = [
+        { name: "Twitter", icon: <RiTwitterXFill className="w-5 h-5" />, link: "https://x.com/DavidZapataOh" },
+        { name: "GitHub", icon: <FaGithub className="w-5 h-5" />, link: "https://github.com/DavidZapataOh/Skillor" },
     ];
 
     return (
