@@ -40,7 +40,6 @@ const challenges = [
     testInstructions: "Tests will verify security measures, time locks, and proper access controls.",
     area: 'security'
   },
-  // Más retos...
 ];
 
 export default function MainContent() {
@@ -48,7 +47,6 @@ export default function MainContent() {
 
   return (
     <div className="p-6 ml-64">
-      {/* Areas Selection Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -74,7 +72,6 @@ export default function MainContent() {
         </div>
       </motion.div>
 
-      {/* Challenges List */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
