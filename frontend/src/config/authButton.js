@@ -11,7 +11,7 @@ function AuthButton() {
         <button
           type="button"
           onClick={login}
-          className="bg-blue-500 text-white font-bold py-2 px-4 rounded"
+          className="bg-primary text-white font-bold py-2 px-4 rounded"
         >
           Login
         </button>
@@ -19,7 +19,7 @@ function AuthButton() {
         <button
           type="button"
           onClick={logout}
-          className="bg-black text-white font-bold py-2 px-4 rounded border-2 border-blue-500"
+          className="bg-black text-white font-bold py-2 px-4 rounded border-2 border-primary"
         >
           Logout
         </button>
