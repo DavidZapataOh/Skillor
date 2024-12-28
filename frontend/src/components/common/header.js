@@ -1,6 +1,5 @@
 "use client";
 import { FireIcon, CurrencyDollarIcon } from "@heroicons/react/24/solid";
-import { cn } from '@/lib/utils';
 import AuthButton from "@/config/authButton";
 
 const StarIcon = ({ className, fill }) => (
@@ -65,20 +64,17 @@ export default function Header() {
       <h1 className="text-lg font-bold text-primary">SKILLOR</h1>
       
       <div className="flex items-center gap-12">
-        {/* Stars */}
         <div className="flex items-center bg-primary p-2 rounded-lg">
           <div className="flex gap-0.5">
             {renderStars(averageStars)}
           </div>
         </div>
 
-        {/* Streak */}
         <div className="flex items-center gap-1 bg-background_secondary px-4 py-2 rounded-lg">
           <FireIcon className="w-6 h-6 text-primary" />
           <span className="text-text font-medium">12</span>
         </div>
 
-        {/* Coins */}
         <div className="flex items-center gap-1 bg-primary px-4 py-2 rounded-lg">
           <CurrencyDollarIcon className="w-6 h-6 text-background" />
           <span className="text-background font-semibold">2,450</span>
