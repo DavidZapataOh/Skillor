@@ -54,19 +54,15 @@ export default function MainContent() {
     if (!inputMessage.trim()) return;
     
     try {
-      // Añadir mensaje del usuario
       setMessages(prev => [...prev, {
         type: 'user',
         content: inputMessage
       }]);
       
-      // Limpiar input
       setInputMessage('');
       
-      // Enviar mensaje a Eliza
       const response = await elizaService.sendMessage(inputMessage);
       
-      // Añadir respuesta de Eliza
       setMessages(prev => [...prev, {
         type: 'mentor',
         content: response.message
@@ -183,7 +179,17 @@ export default function MainContent() {
                       : "bg-background text-text"
                   )}
                 >
-                  {message.content}
+                  <div 
+                    className="prose prose-sm prose-ul:my-4 prose-li:my-2"
+                    dangerouslySetInnerHTML={{ 
+                      __html: message.content
+                        .split('\n')
+                        .map(p => p.trim())
+                        .filter(p => p)
+                        .map(p => `<p class="mb-4">${p}</p>`)
+                        .join('')
+                    }}
+                  />
                 </div>
               ))}
             </div>
