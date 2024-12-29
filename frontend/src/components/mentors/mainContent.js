@@ -5,6 +5,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { FileCode2, Github, Image, Paperclip, Send } from 'lucide-react';
 import { motion } from "framer-motion";
 import { cn } from '@/lib/utils';
+import { elizaService } from '@/services/elizaService';
 
 const mentors = [
   {
@@ -40,12 +41,41 @@ const mentors = [
 export default function MainContent() {
   const [selectedMentor, setSelectedMentor] = useState(mentors[0]);
   const [dots, setDots] = useState([]);
-
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  
   useEffect(() => {
     setDots([...Array(800)].map(() => ({
       opacity: Math.random() * 0.1
     })));
   }, []);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+    
+    try {
+      // Añadir mensaje del usuario
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: inputMessage
+      }]);
+      
+      // Limpiar input
+      setInputMessage('');
+      
+      // Enviar mensaje a Eliza
+      const response = await elizaService.sendMessage(inputMessage);
+      
+      // Añadir respuesta de Eliza
+      setMessages(prev => [...prev, {
+        type: 'mentor',
+        content: response.message
+      }]);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   return (
     <div className="p-6 ml-64">
@@ -143,6 +173,19 @@ export default function MainContent() {
               ))}
             </div>
             <div className="relative z-10">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "mb-4 max-w-[80%] p-4 rounded-xl",
+                    message.type === 'user' 
+                      ? "ml-auto bg-primary text-background" 
+                      : "bg-background text-text"
+                  )}
+                >
+                  {message.content}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -150,6 +193,9 @@ export default function MainContent() {
             <div className="flex items-center gap-3">
               <input
                 type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Send your message..."
                 className="flex-1 bg-transparent text-text placeholder-textSecondary focus:outline-none"
               />
@@ -179,6 +225,7 @@ export default function MainContent() {
                   <Paperclip className="w-5 h-5 text-textSecondary" />
                 </motion.button>
                 <motion.button 
+                  onClick={handleSendMessage}
                   whileHover={{ scale: 1.1 }}
                   className="p-2 hover:bg-primary/20 rounded-full transition-colors"
                 >
