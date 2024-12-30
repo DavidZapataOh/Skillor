@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:5173/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_ELIZA_SERVER_URL}/:path*`,
       },
     ]
   }
