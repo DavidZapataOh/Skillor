@@ -184,7 +184,6 @@ export default function MainContent() {
                     dangerouslySetInnerHTML={{ 
                       __html: message.content
                         .split('\n')
-                        .map(p => p.trim())
                         .filter(p => p)
                         .map(p => `<p class="mb-4">${p}</p>`)
                         .join('')
