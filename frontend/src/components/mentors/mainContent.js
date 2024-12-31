@@ -44,6 +44,7 @@ export default function MainContent() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [attachment, setAttachment] = useState(null);
   
   useEffect(() => {
     setDots([...Array(800)].map(() => ({
@@ -52,18 +53,29 @@ export default function MainContent() {
   }, []);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isProcessing) return;
+    if ((!inputMessage.trim() && !attachment) || isProcessing) return;
     
     try {
       setIsProcessing(true);
+      let finalMessage = inputMessage;
+
+      if (attachment) {
+        if (attachment.type === 'image') {
+          finalMessage += `\n\n![${attachment.name}](${attachment.content})`;
+        } else {
+          finalMessage += `\n\n\`\`\`${attachment.type === 'solidity' ? 'solidity' : ''}\n${attachment.content}\n\`\`\``;
+        }
+      }
+
       setMessages(prev => [...prev, {
         type: 'user',
-        content: inputMessage
+        content: finalMessage
       }]);
       
       setInputMessage('');
+      setAttachment(null);
       
-      const response = await elizaService.sendMessage(inputMessage);
+      const response = await elizaService.sendMessage(finalMessage);
       
       setMessages(prev => [...prev, {
         type: 'mentor',
@@ -75,6 +87,51 @@ export default function MainContent() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleFileSelect = async (type) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    
+    switch(type) {
+      case 'github':
+        input.accept = '.gist';
+        break;
+      case 'solidity':
+        input.accept = '.sol';
+        break;
+      case 'image':
+        input.accept = 'image/*';
+        break;
+      default:
+        input.accept = '*/*';
+    }
+
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (type === 'image') {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setAttachment({
+              type: 'image',
+              content: e.target.result,
+              name: file.name
+            });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          const text = await file.text();
+          setAttachment({
+            type: type,
+            content: text,
+            name: file.name
+          });
+        }
+      }
+    };
+
+    input.click();
   };
 
   return (
@@ -217,24 +274,28 @@ export default function MainContent() {
               <div className="flex items-center gap-3">
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
+                  onClick={() => handleFileSelect('solidity')}
                   className="p-2 hover:bg-background_secondary rounded-full transition-colors"
                 >
                   <FileCode2 className="w-5 h-5 text-textSecondary" />
                 </motion.button>
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
+                  onClick={() => handleFileSelect('github')}
                   className="p-2 hover:bg-background_secondary rounded-full transition-colors"
                 >
                   <Github className="w-5 h-5 text-textSecondary" />
                 </motion.button>
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
+                  onClick={() => handleFileSelect('image')}
                   className="p-2 hover:bg-background_secondary rounded-full transition-colors"
                 >
                   <Image className="w-5 h-5 text-textSecondary" />
                 </motion.button>
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
+                  onClick={() => handleFileSelect('any')}
                   className="p-2 hover:bg-background_secondary rounded-full transition-colors"
                 >
                   <Paperclip className="w-5 h-5 text-textSecondary" />
