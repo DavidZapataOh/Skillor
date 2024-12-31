@@ -43,6 +43,7 @@ export default function MainContent() {
   const [dots, setDots] = useState([]);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   
   useEffect(() => {
     setDots([...Array(800)].map(() => ({
@@ -51,9 +52,10 @@ export default function MainContent() {
   }, []);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isProcessing) return;
     
     try {
+      setIsProcessing(true);
       setMessages(prev => [...prev, {
         type: 'user',
         content: inputMessage
@@ -70,6 +72,8 @@ export default function MainContent() {
       
     } catch (error) {
       console.error('Error sending message:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -191,6 +195,11 @@ export default function MainContent() {
                   />
                 </div>
               ))}
+              {isProcessing && (
+                <div className="mb-4 max-w-[80%] bg-background rounded-xl">
+                  <LoadingDots />
+                </div>
+              )}
             </div>
           </div>
 
@@ -202,7 +211,8 @@ export default function MainContent() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Send your message..."
-                className="flex-1 bg-transparent text-text placeholder-textSecondary focus:outline-none"
+                disabled={isProcessing}
+                className="flex-1 bg-transparent text-text placeholder-textSecondary focus:outline-none disabled:opacity-50"
               />
               <div className="flex items-center gap-3">
                 <motion.button 
@@ -231,8 +241,9 @@ export default function MainContent() {
                 </motion.button>
                 <motion.button 
                   onClick={handleSendMessage}
-                  whileHover={{ scale: 1.1 }}
-                  className="p-2 hover:bg-primary/20 rounded-full transition-colors"
+                  whileHover={{ scale: isProcessing ? 1 : 1.1 }}
+                  disabled={isProcessing}
+                  className="p-2 hover:bg-primary/20 rounded-full transition-colors disabled:opacity-50"
                 >
                   <Send className="w-5 h-5 text-primary" />
                 </motion.button>
@@ -241,6 +252,27 @@ export default function MainContent() {
           </div>
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+export function LoadingDots() {
+  return (
+    <div className="flex items-center gap-1 p-2">
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="w-2 h-2 bg-primary rounded-full"
+          animate={{
+            y: ["0%", "-50%", "0%"],
+          }}
+          transition={{
+            duration: 0.6,
+            repeat: Infinity,
+            delay: i * 0.2,
+          }}
+        />
+      ))}
     </div>
   );
 }
