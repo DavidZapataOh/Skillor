@@ -45,6 +45,7 @@ export default function MainContent() {
   const [inputMessage, setInputMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [attachment, setAttachment] = useState(null);
+  const [isGistModalOpen, setIsGistModalOpen] = useState(false);
   
   useEffect(() => {
     setDots([...Array(800)].map(() => ({
@@ -89,14 +90,42 @@ export default function MainContent() {
     }
   };
 
+  const handleGistSubmit = async (gistUrl) => {
+    try {
+      const gistId = gistUrl.split('/').pop();
+      const response = await fetch(`https://api.github.com/gists/${gistId}`);
+      
+      if (!response.ok) {
+        throw new Error('Invalid Gist URL');
+      }
+      
+      const data = await response.json();
+      const firstFile = Object.values(data.files)[0];
+      const content = firstFile.content;
+      
+      setAttachment({
+        type: 'github',
+        content: content,
+        name: firstFile.filename
+      });
+    } catch (error) {
+      console.error('Error fetching gist:', error);
+      alert('Error loading Gist. Please make sure the URL is correct and the Gist is public.');
+    } finally {
+      setIsGistModalOpen(false);
+    }
+  };
+
   const handleFileSelect = async (type) => {
+    if (type === 'github') {
+      setIsGistModalOpen(true);
+      return;
+    }
+
     const input = document.createElement('input');
     input.type = 'file';
     
     switch(type) {
-      case 'github':
-        input.accept = '.gist';
-        break;
       case 'solidity':
         input.accept = '.sol';
         break;
@@ -335,6 +364,11 @@ export default function MainContent() {
           </div>
         </motion.div>
       </div>
+      <GistUrlModal
+        isOpen={isGistModalOpen}
+        onClose={() => setIsGistModalOpen(false)}
+        onSubmit={handleGistSubmit}
+      />
     </div>
   );
 }
@@ -356,6 +390,51 @@ export function LoadingDots() {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+function GistUrlModal({ isOpen, onClose, onSubmit }) {
+  const [url, setUrl] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(url);
+    setUrl('');
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-background rounded-xl p-6 w-full max-w-md">
+        <h3 className="text-lg font-medium text-text mb-4">Enter Gist URL</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://gist.github.com/..."
+            className="w-full p-2 rounded-lg bg-background_secondary text-text border border-muted focus:outline-none focus:border-primary"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg hover:bg-background_secondary transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-primary text-background rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
