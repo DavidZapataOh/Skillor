@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { FileCode2, Github, Image, Paperclip, Send } from 'lucide-react';
+import { FileCode2, Github, Image, Paperclip, Send, X } from 'lucide-react';
 import { motion } from "framer-motion";
 import { cn } from '@/lib/utils';
 import { elizaService } from '@/services/elizaService';
@@ -271,6 +271,28 @@ export default function MainContent() {
                 disabled={isProcessing}
                 className="flex-1 bg-transparent text-text placeholder-textSecondary focus:outline-none disabled:opacity-50"
               />
+              {attachment && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-background_secondary rounded-lg text-sm">
+                  <div className="flex items-center gap-2 text-textSecondary">
+                    {attachment.type === 'image' ? (
+                      <Image className="w-4 h-4" />
+                    ) : attachment.type === 'solidity' ? (
+                      <FileCode2 className="w-4 h-4" />
+                    ) : attachment.type === 'github' ? (
+                      <Github className="w-4 h-4" />
+                    ) : (
+                      <Paperclip className="w-4 h-4" />
+                    )}
+                    <span className="truncate max-w-[150px]">{attachment.name}</span>
+                  </div>
+                  <button 
+                    onClick={() => setAttachment(null)}
+                    className="hover:text-primary"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
