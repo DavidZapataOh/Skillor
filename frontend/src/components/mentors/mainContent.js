@@ -6,6 +6,7 @@ import { FileCode2, Github, Image, Paperclip, Send, X } from 'lucide-react';
 import { motion } from "framer-motion";
 import { cn } from '@/lib/utils';
 import { elizaService } from '@/services/elizaService';
+import { withAuth } from '@/components/hoc/withAuth';
 
 const mentors = [
   {
@@ -38,7 +39,7 @@ const mentors = [
   }
 ];
 
-export default function MainContent() {
+function MainContent() {
   const [selectedMentor, setSelectedMentor] = useState(mentors[0]);
   const [dots, setDots] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -438,3 +439,5 @@ function GistUrlModal({ isOpen, onClose, onSubmit }) {
     </div>
   );
 }
+
+export default withAuth(MainContent);

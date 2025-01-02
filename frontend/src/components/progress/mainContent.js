@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, Area } from 'recharts';
 import { cn } from '@/lib/utils';
+import { withAuth } from '../hoc/withAuth';
 
 const StarIcon = ({ className, fill, selected }) => (
   <svg 
@@ -109,7 +110,7 @@ const areas = [
   }
 ];
 
-export default function MainContent() {
+function MainContent() {
   const [selectedArea, setSelectedArea] = useState(areas[0]);
 
   const renderStars = (count, selected = false) => {
@@ -331,3 +332,5 @@ export default function MainContent() {
     </div>
   );
 }
+
+export default withAuth(MainContent);

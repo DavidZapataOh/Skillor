@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import * as Accordion from '@radix-ui/react-accordion';
 import { cn } from '@/lib/utils';
+import { withAuth } from '@/components/hoc/withAuth';
 
 const areas = [
   { id: 'solidity', name: 'Solidity' },
@@ -42,7 +43,7 @@ const challenges = [
   },
 ];
 
-export default function MainContent() {
+function MainContent() {
   const [selectedArea, setSelectedArea] = useState('solidity');
 
   return (
@@ -145,3 +146,5 @@ export default function MainContent() {
     </div>
   );
 }
+
+export default withAuth(MainContent);

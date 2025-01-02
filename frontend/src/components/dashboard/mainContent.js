@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import ActivityCalendar from 'react-activity-calendar';
 import { Tooltip as MuiTooltip } from '@mui/material';
+import { withAuth } from '../hoc/withAuth';
 
 
 const statsCards = [
@@ -101,7 +102,8 @@ const StarIcon = ({ className, fill }) => (
   </svg>
 );
 
-export default function MainContent() {
+function MainContent() {
+
   const renderStars = (count) => {
     const stars = [];
     const fullStars = Math.floor(count);
@@ -304,3 +306,5 @@ export default function MainContent() {
     </div>
   );
 }
+
+export default withAuth(MainContent);
