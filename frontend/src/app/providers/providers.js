@@ -1,19 +1,25 @@
-"use client";
+'use client';
 
-import { CrossmintProvider, CrossmintAuthProvider } from "@crossmint/client-sdk-react-ui";
+import {PrivyProvider} from '@privy-io/react-auth';
 
-export default function Providers({ children }) {
+export default function Providers({children}) {
   return (
-    <CrossmintProvider apiKey={process.env.NEXT_PUBLIC_CROSSMINT_API_KEY ?? ""}>
-      <CrossmintAuthProvider
-        embeddedWallets={{
-          type: "evm-smart-wallet",
-          defaultChain: "polygon-amoy",
-          createOnLogin: "all-users"
-        }}
-      >
-        {children}
-      </CrossmintAuthProvider>
-    </CrossmintProvider>
+    <PrivyProvider
+      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID}
+      config={{
+        // Customize Privy's appearance in your app
+        appearance: {
+          theme: 'dark',
+          accentColor: '#676FFF',
+          logo: '/Logo.png',
+        },
+        // Create embedded wallets for users who don't have a wallet
+        embeddedWallets: {
+          createOnLogin: 'users-without-wallets',
+        },
+      }}
+    >
+      {children}
+    </PrivyProvider>
   );
 }
