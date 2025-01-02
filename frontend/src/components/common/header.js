@@ -1,6 +1,7 @@
 "use client";
 import { FireIcon, CurrencyDollarIcon } from "@heroicons/react/24/solid";
 import AuthButton from "@/config/authButton";
+import { useTokenBalance } from '@/hooks/useTokenBalance';
 
 const StarIcon = ({ className, fill }) => (
   <svg 
@@ -57,7 +58,7 @@ const renderStars = (count) => {
 };
 
 export default function Header() {
-  const averageStars = 3.5;
+  const tokenBalance = useTokenBalance();
 
   return (
     <header className="ml-64 flex justify-between items-center px-6 py-4 bg-background shadow-lg border-b border-muted relative z-10">
@@ -66,7 +67,7 @@ export default function Header() {
       <div className="flex items-center gap-12">
         <div className="flex items-center bg-primary p-2 rounded-lg">
           <div className="flex gap-0.5">
-            {renderStars(averageStars)}
+            {renderStars(3.5)}
           </div>
         </div>
 
@@ -75,12 +76,15 @@ export default function Header() {
           <span className="text-text font-medium">12</span>
         </div>
 
-        <div className="flex items-center gap-1 bg-primary px-4 py-2 rounded-lg">
-          <CurrencyDollarIcon className="w-6 h-6 text-background" />
-          <span className="text-background font-semibold">2,450</span>
+        <div className="flex items-center justify-center gap-1 bg-primary p-2 rounded-lg min-w-[100px]">
+          <CurrencyDollarIcon className="w-6 h-6 text-background shrink-0" />
+          <span className="text-background font-semibold text-center">
+            {tokenBalance.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2
+            })}
+          </span>
         </div>
-
-        
 
         <AuthButton />
       </div>
