@@ -6,103 +6,111 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import ActivityCalendar from 'react-activity-calendar';
 import { Tooltip as MuiTooltip } from '@mui/material';
 import { withAuth } from '../hoc/withAuth';
-
-
-const statsCards = [
-  { title: "Streak", value: "12 days", icon: <FireIcon className="w-8 h-8" /> },
-  { title: "Challenges met", value: "48", icon: <TrophyIcon className="w-8 h-8" /> },
-  { title: "Coins earned", value: "2,450 $SKRLL", icon: <CurrencyDollarIcon className="w-8 h-8" /> }
-];
-
-const skillsData = [
-  { name: "Smart Contract Development", score: 85 },
-  { name: "Gas Optimization", score: 92 },
-  { name: "Security Best Practices", score: 78 },
-  { name: "Testing & Debugging", score: 88 },
-  { name: "DeFi Protocols", score: 75 },
-  { name: "ERC Standards", score: 90 },
-  { name: "Blockchain Architecture", score: 82 },
-  { name: "Web3 Integration", score: 87 },
-  { name: "Tokenomics", score: 79 },
-  { name: "NFT Development", score: 85 },
-  { name: "Layer 2 Solutions", score: 76 },
-  { name: "Cross-chain Development", score: 81 },
-  { name: "Consensus Mechanisms", score: 73 },
-  { name: "ZK Proofs", score: 68 },
-  { name: "DAO Structures", score: 77 },
-  { name: "MEV Protection", score: 71 },
-  { name: "Upgradeable Contracts", score: 83 },
-  { name: "Oracle Integration", score: 80 },
-  { name: "Governance Systems", score: 75 },
-  { name: "Flash Loans", score: 72 }
-];
-
-const progressData = [
-  {
-    area: "Solidity",
-    stars: 4.5,
-    recentScores: [85, 92, 88, 90, 87],
-    totalScore: 88
-  },
-  {
-    area: "Security",
-    stars: 3.5,
-    recentScores: [75, 82, 78, 80, 85],
-    totalScore: 80
-  },
-  {
-    area: "ZK Proofs",
-    stars: 2.5,
-    recentScores: [65, 70, 68, 72, 75],
-    totalScore: 70
-  }
-];
-
-const pendingChallenges = [
-  "Build a DEX with Order Book",
-  "Implement ZK Rollup",
-  "Create Governance Token",
-  "Optimize Gas Usage"
-];
-
-function getDatesInRange(startDate, endDate) {
-  const date = new Date(startDate.getTime());
-  const dates = [];
-  
-  while (date <= endDate) {
-    dates.push(new Date(date));
-    date.setDate(date.getDate() + 1);
-  }
-  
-  return dates;
-}
-
-function generateYearlyData() {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setFullYear(endDate.getFullYear() - 1);
-  
-  const dates = getDatesInRange(startDate, endDate);
-  return dates.map(date => ({
-    date: date.toISOString().split('T')[0],
-    count: 0,
-    level: 0
-  }));
-}
-
-const StarIcon = ({ className, fill }) => (
-  <svg 
-    className={className} 
-    viewBox="0 0 24 24" 
-    fill={fill}
-    stroke="#141414"
-    strokeWidth="2"
-  >
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
-);
+import { useTokenBalance } from '@/hooks/useTokenBalance';
 
 function MainContent() {
+  const tokenBalance = useTokenBalance();
+
+  const statsCards = [
+    { title: "Streak", value: "12 days", icon: <FireIcon className="w-8 h-8" /> },
+    { title: "Challenges met", value: "48", icon: <TrophyIcon className="w-8 h-8" /> },
+    { 
+      title: "Coins earned", 
+      value: `${tokenBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      })} $SKLLR`, 
+      icon: <CurrencyDollarIcon className="w-8 h-8" /> 
+    }
+  ];
+
+  const skillsData = [
+    { name: "Smart Contract Development", score: 85 },
+    { name: "Gas Optimization", score: 92 },
+    { name: "Security Best Practices", score: 78 },
+    { name: "Testing & Debugging", score: 88 },
+    { name: "DeFi Protocols", score: 75 },
+    { name: "ERC Standards", score: 90 },
+    { name: "Blockchain Architecture", score: 82 },
+    { name: "Web3 Integration", score: 87 },
+    { name: "Tokenomics", score: 79 },
+    { name: "NFT Development", score: 85 },
+    { name: "Layer 2 Solutions", score: 76 },
+    { name: "Cross-chain Development", score: 81 },
+    { name: "Consensus Mechanisms", score: 73 },
+    { name: "ZK Proofs", score: 68 },
+    { name: "DAO Structures", score: 77 },
+    { name: "MEV Protection", score: 71 },
+    { name: "Upgradeable Contracts", score: 83 },
+    { name: "Oracle Integration", score: 80 },
+    { name: "Governance Systems", score: 75 },
+    { name: "Flash Loans", score: 72 }
+  ];
+
+  const progressData = [
+    {
+      area: "Solidity",
+      stars: 4.5,
+      recentScores: [85, 92, 88, 90, 87],
+      totalScore: 88
+    },
+    {
+      area: "Security",
+      stars: 3.5,
+      recentScores: [75, 82, 78, 80, 85],
+      totalScore: 80
+    },
+    {
+      area: "ZK Proofs",
+      stars: 2.5,
+      recentScores: [65, 70, 68, 72, 75],
+      totalScore: 70
+    }
+  ];
+
+  const pendingChallenges = [
+    "Build a DEX with Order Book",
+    "Implement ZK Rollup",
+    "Create Governance Token",
+    "Optimize Gas Usage"
+  ];
+
+  function getDatesInRange(startDate, endDate) {
+    const date = new Date(startDate.getTime());
+    const dates = [];
+    
+    while (date <= endDate) {
+      dates.push(new Date(date));
+      date.setDate(date.getDate() + 1);
+    }
+    
+    return dates;
+  }
+
+  function generateYearlyData() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setFullYear(endDate.getFullYear() - 1);
+    
+    const dates = getDatesInRange(startDate, endDate);
+    return dates.map(date => ({
+      date: date.toISOString().split('T')[0],
+      count: 0,
+      level: 0
+    }));
+  }
+
+  const StarIcon = ({ className, fill }) => (
+    <svg 
+      className={className} 
+      viewBox="0 0 24 24" 
+      fill={fill}
+      stroke="#141414"
+      strokeWidth="2"
+    >
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
 
   const renderStars = (count) => {
     const stars = [];
