@@ -303,7 +303,7 @@ function MainContent() {
             {pendingChallenges.map((challenge, index) => (
               <div
                 key={index}
-                className="bg-primary/20 p-4 rounded-lg"
+                className="bg-primary/25 p-4 rounded-lg"
               >
                 <span className="text-primary font-medium">{challenge}</span>
               </div>
