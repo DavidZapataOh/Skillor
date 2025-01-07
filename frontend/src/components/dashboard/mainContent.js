@@ -25,26 +25,26 @@ function MainContent() {
   ];
 
   const skillsData = [
-    { name: "Smart Contract Development", score: 85 },
-    { name: "Gas Optimization", score: 92 },
-    { name: "Security Best Practices", score: 78 },
-    { name: "Testing & Debugging", score: 88 },
-    { name: "DeFi Protocols", score: 75 },
-    { name: "ERC Standards", score: 90 },
-    { name: "Blockchain Architecture", score: 82 },
-    { name: "Web3 Integration", score: 87 },
-    { name: "Tokenomics", score: 79 },
-    { name: "NFT Development", score: 85 },
-    { name: "Layer 2 Solutions", score: 76 },
-    { name: "Cross-chain Development", score: 81 },
-    { name: "Consensus Mechanisms", score: 73 },
-    { name: "ZK Proofs", score: 68 },
-    { name: "DAO Structures", score: 77 },
-    { name: "MEV Protection", score: 71 },
-    { name: "Upgradeable Contracts", score: 83 },
-    { name: "Oracle Integration", score: 80 },
-    { name: "Governance Systems", score: 75 },
-    { name: "Flash Loans", score: 72 }
+    { name: "Smart Contract Development", score: 17 },
+    { name: "Gas Optimization", score: 18 },
+    { name: "Security Best Practices", score: 15 },
+    { name: "Testing & Debugging", score: 16 },
+    { name: "DeFi Protocols", score: 14 },
+    { name: "ERC Standards", score: 18 },
+    { name: "Blockchain Architecture", score: 5 },
+    { name: "Web3 Integration", score: 17 },
+    { name: "Tokenomics", score: 15 },
+    { name: "NFT Development", score: 17 },
+    { name: "Layer 2 Solutions", score: 14 },
+    { name: "Cross-chain Development", score: 16 },
+    { name: "Consensus Mechanisms", score: 13 },
+    { name: "ZK Proofs", score: 12 },
+    { name: "DAO Structures", score: 15 },
+    { name: "MEV Protection", score: 13 },
+    { name: "Upgradeable Contracts", score: 16 },
+    { name: "Oracle Integration", score: 15 },
+    { name: "Governance Systems", score: 14 },
+    { name: "Flash Loans", score: 13 }
   ];
 
   const progressData = [
@@ -165,6 +165,10 @@ function MainContent() {
     return activityDay || baseDay;
   });
 
+  const getOpacityFromScore = (score) => {
+    return 0.2 + ((score - 1) / 19) * 0.8;
+  };
+
   return (
     <div className="p-6 ml-64">
       <div className="grid grid-cols-3 gap-4 mb-4">
@@ -204,7 +208,10 @@ function MainContent() {
               }`}
             >
               <span className="text-textSecondary text-sm">{skill.name}</span>
-              <span className=" border-1 border-primary text-primary px-2 py-1 rounded-lg text-sm">
+              <span className="border-1 border-primary px-2 py-1 rounded-lg text-sm" 
+                style={{ 
+                  color: `rgba(127, 184, 0, ${getOpacityFromScore(skill.score)})`
+                }}>
                 {skill.score}
               </span>
             </div>
