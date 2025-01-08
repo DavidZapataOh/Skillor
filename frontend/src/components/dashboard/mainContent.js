@@ -166,7 +166,7 @@ function MainContent() {
   });
 
   const getOpacityFromScore = (score) => {
-    return 0.2 + ((score - 1) / 19) * 0.8;
+    return 0.4 + ((score - 1) / 19) * 0.6;
   };
 
   return (
@@ -208,7 +208,7 @@ function MainContent() {
               }`}
             >
               <span className="text-textSecondary text-sm">{skill.name}</span>
-              <span className="border-1 border-primary px-2 py-1 rounded-lg text-sm" 
+              <span className="border-1 border-primary px-2 py-1 rounded-lg text-sm inline-block min-w-[34px] text-center" 
                 style={{ 
                   color: `rgba(127, 184, 0, ${getOpacityFromScore(skill.score)})`
                 }}>
