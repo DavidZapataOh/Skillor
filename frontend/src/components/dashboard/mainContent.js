@@ -165,8 +165,9 @@ function MainContent() {
     return activityDay || baseDay;
   });
 
-  const getOpacityFromScore = (score) => {
-    return 0.4 + ((score - 1) / 19) * 0.6;
+  const getColorFromScore = (score) => {
+    const saturation = 30 + ((score - 1) / 19) * 70;
+    return `hsl(86, ${saturation}%, 36%)`;
   };
 
   return (
@@ -208,9 +209,11 @@ function MainContent() {
               }`}
             >
               <span className="text-textSecondary text-sm">{skill.name}</span>
-              <span className="border-1 border-primary px-2 py-1 rounded-lg text-sm inline-block min-w-[34px] text-center" 
+              <span 
+                className="px-2 py-1 rounded-lg text-sm inline-block min-w-[38px] text-center border-2 font-bold" 
                 style={{ 
-                  color: `rgba(127, 184, 0, ${getOpacityFromScore(skill.score)})`
+                  color: getColorFromScore(skill.score),
+                  borderColor: getColorFromScore(skill.score)
                 }}>
                 {skill.score}
               </span>
