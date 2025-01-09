@@ -68,6 +68,9 @@ export const elizaService = {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.json();
+    if (!data.agents || data.agents.length === 0) {
+      throw new Error("No agents found");
+    }
     return data.agents;
   }
 }; 
