@@ -39,8 +39,8 @@ const formatResponse = (text) => {
 };
 
 export const elizaService = {
-  async sendMessage(text) {
-    const res = await fetch(`/api/vitalik/message`, {
+  async sendMessage(text, agentId = 'vitalik') {
+    const res = await fetch(`/api/${agentId}/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export const elizaService = {
       body: JSON.stringify({
         text,
         userId: 'user',
-        roomId: 'default-room-vitalik',
+        roomId: `default-room-${agentId}`,
       }),
     });
 
@@ -68,6 +68,7 @@ export const elizaService = {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.json();
+    console.log('Agentes activos:', data.agents);
     if (!data.agents || data.agents.length === 0) {
       throw new Error("No agents found");
     }

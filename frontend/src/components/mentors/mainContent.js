@@ -14,33 +14,38 @@ const mentors = [
     role: "Solidity Expert",
     image: "/mentors/vitalik.jpg",
     available: true,
+    agentId: "vitalik",
     description: "Expert in smart contracts and Solidity development. Specialized in gas optimization and secure design patterns."
   },
   {
     name: "Johnny Clock",
     role: "Security Expert",
     image: "/mentors/johnny.jpg",
-    available: false,
+    available: true,
+    agentId: "johnny",
     description: "Smart contract security specialist. Experienced in auditing and implementing secure DeFi protocols."
   },
   {
     name: "Eli Bean-salsa",
     role: "ZK Specialist",
     image: "/mentors/eli.jpg",
-    available: false,
+    available: true,
+    agentId: "eli",
     description: "Zero-knowledge proof expert. Focused on scalability solutions and privacy-preserving protocols."
   },
   {
     name: "Emin Fun",
     role: "Avalanche Expert",
     image: "/mentors/emin.jpg",
-    available: false,
+    available: true,
+    agentId: "emin",
     description: "Avalanche blockchain expert. Specialized in L1 development and cross-chain protocols."
   }
 ];
 
 function MainContent() {
   const [selectedMentor, setSelectedMentor] = useState(mentors[0]);
+  const [activeAgents, setActiveAgents] = useState([]);
   const [dots, setDots] = useState([]);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -48,6 +53,20 @@ function MainContent() {
   const [attachment, setAttachment] = useState(null);
   const [isGistModalOpen, setIsGistModalOpen] = useState(false);
   
+  useEffect(() => {
+    const fetchActiveAgents = async () => {
+      try {
+        const agents = await elizaService.getAgents();
+        setActiveAgents(agents.map(agent => agent.name));
+      } catch (error) {
+        console.error('Error fetching agents:', error);
+        setActiveAgents([]);
+      }
+    };
+    
+    fetchActiveAgents();
+  }, []);
+
   useEffect(() => {
     setDots([...Array(800)].map(() => ({
       opacity: Math.random() * 0.1
@@ -77,7 +96,7 @@ function MainContent() {
       setInputMessage('');
       setAttachment(null);
       
-      const response = await elizaService.sendMessage(finalMessage);
+      const response = await elizaService.sendMessage(finalMessage, selectedMentor.agentId);
       
       setMessages(prev => [...prev, {
         type: 'mentor',
@@ -196,10 +215,10 @@ function MainContent() {
                     alt={mentor.name}
                     className={cn(
                       "w-12 h-12 rounded-full object-cover border-2",
-                      mentor.available ? "border-primary" : "border-transparent grayscale"
+                      activeAgents.includes(mentor.agentId) ? "border-primary" : "border-transparent grayscale"
                     )}
                   />
-                  {mentor.available && (
+                  {activeAgents.includes(mentor.agentId) && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-primary border-2 border-background rounded-full" />
                   )}
                 </div>
@@ -211,7 +230,7 @@ function MainContent() {
                     {mentor.name}
                   </h3>
                   <p className="text-sm text-textSecondary">
-                    {mentor.available ? "Available" : "Unavailable"}
+                    {activeAgents.includes(mentor.agentId) ? "Available" : "Unavailable"}
                   </p>
                 </div>
               </motion.button>
