@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { FireIcon, TrophyIcon, CurrencyDollarIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
@@ -7,13 +8,21 @@ import ActivityCalendar from 'react-activity-calendar';
 import { Tooltip as MuiTooltip } from '@mui/material';
 import { withAuth } from '../hoc/withAuth';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
+import useStore from '@/store/challengeStore';
+import { challenges } from '@/data/challenges';
 
 function MainContent() {
   const tokenBalance = useTokenBalance();
+  const { streak, areaStats } = useStore();
+
+  const totalChallenges = Object.values(areaStats).reduce(
+    (total, area) => total + area.completedChallenges.length,
+    0
+  );
 
   const statsCards = [
-    { title: "Streak", value: "12 days", icon: <FireIcon className="w-8 h-8" /> },
-    { title: "Challenges met", value: "48", icon: <TrophyIcon className="w-8 h-8" /> },
+    { title: "Streak", value: `${streak} days`, icon: <FireIcon className="w-8 h-8" /> },
+    { title: "Challenges met", value: totalChallenges, icon: <TrophyIcon className="w-8 h-8" /> },
     { 
       title: "Coins earned", 
       value: `${tokenBalance.toLocaleString(undefined, {
@@ -24,56 +33,62 @@ function MainContent() {
     }
   ];
 
+  const calculateSkillScore = (skill) => {
+    let score = 0;
+    Object.values(areaStats).forEach(area => {
+      const relevantChallenges = area.completedChallenges.filter(
+        challenge => challenge.feedback.skills?.includes(skill)
+      );
+      if (relevantChallenges.length > 0) {
+        score += relevantChallenges.reduce((acc, curr) => acc + curr.score, 0) / relevantChallenges.length;
+      }
+    });
+    return Math.round(score);
+  };
+
   const skillsData = [
-    { name: "Smart Contract Development", score: 17 },
-    { name: "Gas Optimization", score: 18 },
-    { name: "Security Best Practices", score: 15 },
-    { name: "Testing & Debugging", score: 16 },
-    { name: "DeFi Protocols", score: 14 },
-    { name: "ERC Standards", score: 18 },
-    { name: "Blockchain Architecture", score: 5 },
-    { name: "Web3 Integration", score: 17 },
-    { name: "Tokenomics", score: 15 },
-    { name: "NFT Development", score: 17 },
-    { name: "Layer 2 Solutions", score: 14 },
-    { name: "Cross-chain Development", score: 16 },
-    { name: "Consensus Mechanisms", score: 13 },
-    { name: "ZK Proofs", score: 12 },
-    { name: "DAO Structures", score: 15 },
-    { name: "MEV Protection", score: 13 },
-    { name: "Upgradeable Contracts", score: 16 },
-    { name: "Oracle Integration", score: 15 },
-    { name: "Governance Systems", score: 14 },
-    { name: "Flash Loans", score: 13 }
+    { name: "Smart Contract Development", score: calculateSkillScore("smart_contracts") },
+    { name: "Gas Optimization", score: calculateSkillScore("gas_optimization") },
+    { name: "Security Best Practices", score: calculateSkillScore("security_best_practices") },
+    { name: "Testing & Debugging", score: calculateSkillScore("testing_and_debugging") },
+    { name: "DeFi Protocols", score: calculateSkillScore("defi_protocols") },
+    { name: "ERC Standards", score: calculateSkillScore("erc_standards") },
+    { name: "Blockchain Architecture", score: calculateSkillScore("blockchain_architecture") },
+    { name: "Web3 Integration", score: calculateSkillScore("web3_integration") },
+    { name: "Tokenomics", score: calculateSkillScore("tokenomics") },
+    { name: "NFT Development", score: calculateSkillScore("nft_development") },
+    { name: "Layer 2 Solutions", score: calculateSkillScore("layer_2_solutions") },
+    { name: "Cross-chain Development", score: calculateSkillScore("cross_chain_development") },
+    { name: "Consensus Mechanisms", score: calculateSkillScore("consensus_mechanisms") },
+    { name: "ZK Proofs", score: calculateSkillScore("zk_proofs") },
+    { name: "DAO Structures", score: calculateSkillScore("dao_structures") },
+    { name: "MEV Protection", score: calculateSkillScore("mev_protection") },
+    { name: "Upgradeable Contracts", score: calculateSkillScore("upgradeable_contracts") },
+    { name: "Oracle Integration", score: calculateSkillScore("oracle_integration") },
+    { name: "Governance Systems", score: calculateSkillScore("governance_systems") },
+    { name: "Flash Loans", score: calculateSkillScore("flash_loans") }
   ];
 
-  const progressData = [
-    {
-      area: "Solidity",
-      stars: 4.5,
-      recentScores: [85, 92, 88, 90, 87],
-      totalScore: 88
-    },
-    {
-      area: "Security",
-      stars: 3.5,
-      recentScores: [75, 82, 78, 80, 85],
-      totalScore: 80
-    },
-    {
-      area: "ZK Proofs",
-      stars: 2.5,
-      recentScores: [65, 70, 68, 72, 75],
-      totalScore: 70
-    }
-  ];
+  const progressData = Object.entries(areaStats).map(([area, stats]) => {
+    const recentScores = stats.completedChallenges
+      .slice(-5)
+      .map(challenge => challenge.score);
+      
+    return {
+      area: area.charAt(0).toUpperCase() + area.slice(1),
+      stars: stats.stars,
+      recentScores,
+      totalScore: Math.round(stats.score)
+    };
+  });
 
-  const pendingChallenges = [
-    "Build a DEX with Order Book",
-    "Implement ZK Rollup",
-    "Create Governance Token",
-    "Optimize Gas Usage"
-  ];
+  const pendingChallenges = challenges
+    .filter(challenge => {
+      const areaStats = useStore.getState().areaStats[challenge.area];
+      return !areaStats.completedChallenges.some(cc => cc.id === challenge.id);
+    })
+    .slice(0, 4)
+    .map(challenge => challenge.title);
 
   function getDatesInRange(startDate, endDate) {
     const date = new Date(startDate.getTime());

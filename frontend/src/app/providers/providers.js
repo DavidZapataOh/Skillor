@@ -7,13 +7,11 @@ export default function Providers({children}) {
     <PrivyProvider
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID}
       config={{
-        // Customize Privy's appearance in your app
         appearance: {
           theme: 'dark',
           accentColor: '#676FFF',
           logo: '/Logo.png',
         },
-        // Create embedded wallets for users who don't have a wallet
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
         },

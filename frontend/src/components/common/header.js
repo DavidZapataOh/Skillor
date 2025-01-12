@@ -2,6 +2,7 @@
 import { FireIcon, CurrencyDollarIcon } from "@heroicons/react/24/solid";
 import AuthButton from "@/config/authButton";
 import { useTokenBalance } from '@/hooks/useTokenBalance';
+import useStore from '@/store/challengeStore';
 
 const StarIcon = ({ className, fill }) => (
   <svg 
@@ -59,6 +60,12 @@ const renderStars = (count) => {
 
 export default function Header() {
   const tokenBalance = useTokenBalance();
+  const { areaStats } = useStore();
+  
+  const averageStars = Object.values(areaStats).reduce(
+    (acc, area) => acc + area.stars, 
+    0
+  ) / Object.keys(areaStats).length;
 
   return (
     <header className="ml-64 flex justify-between items-center px-6 py-4 bg-background shadow-lg border-b border-muted relative z-10">
@@ -67,13 +74,13 @@ export default function Header() {
       <div className="flex items-center gap-12">
         <div className="flex items-center bg-primary p-2 rounded-lg">
           <div className="flex gap-0.5">
-            {renderStars(3.5)}
+            {renderStars(averageStars)}
           </div>
         </div>
 
         <div className="flex items-center gap-1 bg-background_secondary px-4 py-2 rounded-lg">
           <FireIcon className="w-6 h-6 text-primary" />
-          <span className="text-text font-medium">12</span>
+          <span className="text-text font-medium">{useStore().streak}</span>
         </div>
 
         <div className="flex items-center justify-center gap-1 bg-primary p-2 rounded-lg min-w-[100px]">
