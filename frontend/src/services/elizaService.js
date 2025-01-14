@@ -73,5 +73,52 @@ export const elizaService = {
       throw new Error("No agents found");
     }
     return data.agents;
+  },
+
+  async evaluateChallenge(solution, challengeId, userId) {
+    const res = await fetch(`/api/mentor_chief/evaluate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        solution,
+        challengeId,
+        userId,
+        lastChallenges: 5, 
+      }),
+    });
+    
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return await res.json();
+  },
+
+  async generateNextChallenge(userId) {
+    const res = await fetch(`/api/mentor_chief/challenge`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        skillLevels: await this.getUserSkillLevels(userId),
+      }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return await res.json();
+  },
+
+  async getUserSkillLevels(userId) {
+    const skillsData = [
+      "smart_contracts",
+      "gas_optimization",
+      "security_best_practices",
+    ].map(skill => ({
+      skill,
+      score: calculateSkillScore(skill)
+    }));
+
+    return skillsData;
   }
 }; 
