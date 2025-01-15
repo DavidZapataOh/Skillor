@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import * as Accordion from '@radix-ui/react-accordion';
 import { cn } from '@/lib/utils';
 import { withAuth } from '@/components/hoc/withAuth';
 import useStore from '@/store/challengeStore';
-import { challenges } from '@/data/challenges';
+import { elizaService } from '@/services/elizaService';
 import Link from 'next/link';
 
 const areas = [
@@ -19,18 +19,21 @@ const areas = [
 
 function MainContent() {
   const [selectedArea, setSelectedArea] = useState('solidity');
-  const [testResult, setTestResult] = useState(null);
+  const { activeChallenge } = useStore();
 
-  const handleTestContract = async (challenge, contractAddress) => {
-    try {
-      const result = await testContract(contractAddress, challenge.tests);
-      
-      useStore.getState().completeChallenge(challenge.area, challenge.id, result);
-      useStore.getState().updateStreak();
-      
-      setTestResult(result);
-    } catch (error) {
-      console.error('Error testing contract:', error);
+  useEffect(() => {
+    const loadInitialChallenge = async () => {
+      if (!activeChallenge[selectedArea]) {
+        await elizaService.generateNextChallenge(selectedArea, 'user');
+      }
+    };
+    loadInitialChallenge();
+  }, [selectedArea]);
+
+  const handleAreaChange = async (areaId) => {
+    setSelectedArea(areaId);
+    if (!activeChallenge[areaId]) {
+      await elizaService.generateNextChallenge(areaId, 'user');
     }
   };
 
@@ -47,7 +50,7 @@ function MainContent() {
             <motion.button
               key={area.id}
               whileHover={{ scale: 1.02 }}
-              onClick={() => setSelectedArea(area.id)}
+              onClick={() => handleAreaChange(area.id)}
               className={cn(
                 "px-4 py-2 rounded-lg transition-all",
                 selectedArea === area.id
@@ -62,31 +65,28 @@ function MainContent() {
       </motion.div>
   
       <div className="grid grid-cols-2 gap-4">
-        {challenges
-          .filter(challenge => challenge.area === selectedArea)
-          .map((challenge) => (
-            <Link
-              key={challenge.id}
-              href={`/challenges/${challenge.id}`}
+        {activeChallenge[selectedArea] && (
+          <Link
+            href={`/challenges/${selectedArea}`}
+          >
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="bg-background p-6 rounded-xl border-1 border-muted cursor-pointer"
             >
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="bg-background p-6 rounded-xl border-1 border-muted cursor-pointer"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-primary text-background px-4 py-2 rounded-lg">
-                    #{challenge.id}
-                  </div>
-                  <h3 className="text-text text-lg font-medium">
-                    {challenge.title}
-                  </h3>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="bg-primary text-background px-4 py-2 rounded-lg">
+                  Active Challenge
                 </div>
-                <p className="text-textSecondary">
-                  {challenge.description}
-                </p>
-              </motion.div>
-            </Link>
-          ))}
+                <h3 className="text-text text-lg font-medium">
+                  {activeChallenge[selectedArea].title}
+                </h3>
+              </div>
+              <p className="text-textSecondary">
+                {activeChallenge[selectedArea].description}
+              </p>
+            </motion.div>
+          </Link>
+        )}
       </div>
     </div>
   );

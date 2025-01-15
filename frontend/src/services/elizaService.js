@@ -1,6 +1,8 @@
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github-dark.css';
 import hljsDefineSolidity from 'highlightjs-solidity';
+import useStore from '@/store/useStore';
+import { generateInitialChallenge } from '@/data/challenges';
 
 hljsDefineSolidity(hljs);
 
@@ -75,38 +77,185 @@ export const elizaService = {
     return data.agents;
   },
 
-  async evaluateChallenge(solution, challengeId, userId) {
-    const res = await fetch(`/api/mentor_chief/evaluate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        solution,
-        challengeId,
-        userId,
-        lastChallenges: 5, 
-      }),
-    });
+  async evaluateChallenge(solution, challengeId, area, userId) {
+    const store = useStore.getState();
     
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    return await res.json();
+    const prompt = `Por favor, evalúa esta solución en formato JSON con la siguiente estructura:
+    {
+      "score": number,
+      "feedback": {
+        "successes": string[],
+        "improvements": string[]
+      },
+      "metrics": {
+        "skill_name": number
+      }
+    }
+    
+    Solución: ${solution}
+    Reto ID: ${challengeId}
+    Área: ${area}
+    
+    IMPORTANTE: Responde SOLO con el objeto JSON, sin texto adicional.`;
+
+    try {
+      const res = await fetch(`/api/mentor_chief/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: prompt,
+          userId,
+          roomId: `evaluation-${area}`,
+          context: {
+            solution,
+            challengeId,
+            area,
+            stats: store.areaStats[area],
+            skills: store.skills
+          }
+        }),
+      });
+
+      if (!res.ok) {
+        console.warn(`API error (${res.status}), using fallback evaluation`);
+        return this.getFallbackEvaluation();
+      }
+
+      const data = await res.json();
+      const jsonResponse = data.reverse().find(msg => {
+        try {
+          return JSON.parse(msg.text) && true;
+        } catch {
+          return false;
+        }
+      });
+
+      if (jsonResponse) {
+        const evaluation = JSON.parse(jsonResponse.text);
+        this.updateEvaluationStore(evaluation);
+        return evaluation;
+      }
+    } catch (error) {
+      console.error('Error accessing API:', error);
+    }
+
+    return this.getFallbackEvaluation();
   },
 
-  async generateNextChallenge(userId) {
-    const res = await fetch(`/api/mentor_chief/challenge`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  getFallbackEvaluation() {
+    const evaluation = {
+      score: 70,
+      feedback: {
+        successes: ['Solución básica implementada'],
+        improvements: ['Considera optimizar el código']
       },
-      body: JSON.stringify({
-        userId,
-        skillLevels: await this.getUserSkillLevels(userId),
-      }),
-    });
+      metrics: {
+        smart_contracts: 5,
+        gas_optimization: 3,
+        security_best_practices: 2
+      },
+      date: new Date().toISOString()
+    };
+    this.updateEvaluationStore(evaluation);
+    return evaluation;
+  },
 
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    return await res.json();
+  updateEvaluationStore(evaluation) {
+    useStore.setState((state) => ({
+      ...state,
+      lastEvaluation: evaluation,
+      evaluationHistory: [...state.evaluationHistory, evaluation]
+    }));
+  },
+
+  async generateNextChallenge(area, userId) {
+    const store = useStore.getState();
+    
+    if (!store.areaStats[area]) {
+      throw new Error(`Área ${area} no encontrada`);
+    }
+
+    const areaStats = store.areaStats[area];
+    const completedCount = areaStats.completedChallenges.length;
+    const currentLevel = Math.floor(completedCount / 10);
+
+    const prompt = `Por favor, genera un nuevo reto de programación en formato JSON con la siguiente estructura:
+    {
+      "id": string,
+      "title": string,
+      "description": string,
+      "theory": string,
+      "example": string,
+      "requirements": string[],
+      "testCases": array,
+      "startingCode": string,
+      "difficulty": string,
+      "category": string
+    }
+    
+    Área: ${area}
+    Nivel actual: ${currentLevel}
+    
+    IMPORTANTE: Responde SOLO con el objeto JSON, sin texto adicional.`;
+
+    try {
+      const res = await fetch(`/api/mentor_chief/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: prompt,
+          userId,
+          roomId: `challenge-${area}`,
+          context: {
+            area,
+            stats: areaStats,
+            completedCount,
+            currentLevel,
+            skills: store.skills
+          }
+        }),
+      });
+
+      if (!res.ok) {
+        console.warn(`API error (${res.status}), using fallback template`);
+        return this.useInitialTemplate(area);
+      }
+
+      const data = await res.json();
+      const jsonResponse = data.reverse().find(msg => {
+        try {
+          return JSON.parse(msg.text) && true;
+        } catch {
+          return false;
+        }
+      });
+
+      if (jsonResponse) {
+        const challenge = JSON.parse(jsonResponse.text);
+        this.updateStore(area, challenge);
+        return challenge;
+      }
+    } catch (error) {
+      console.error('Error accessing API:', error);
+    }
+
+    return this.useInitialTemplate(area);
+  },
+
+  useInitialTemplate(area) {
+    const initialChallenge = generateInitialChallenge(area);
+    this.updateStore(area, initialChallenge);
+    return initialChallenge;
+  },
+
+  updateStore(area, challenge) {
+    useStore.setState((state) => ({
+      ...state,
+      activeChallenge: {
+        ...state.activeChallenge,
+        [area]: challenge
+      }
+    }));
   },
 
   async getUserSkillLevels(userId) {

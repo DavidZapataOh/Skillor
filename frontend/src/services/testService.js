@@ -1,37 +1,21 @@
 export class TestService {
-  static async validateCode(code) {
+  static async runTest(userCode, testCode) {
     try {
-      const response = await fetch('/api/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code, tests: [] })
-      });
-
-      const data = await response.json();
+      const getTestFunction = new Function(testCode);
+      const testFunction = getTestFunction();
+      
+      const result = testFunction(userCode);
+      
       return {
-        valid: data.passed,
-        error: data.tests[0]?.error
+        passed: result.passed,
+        error: result.error
       };
     } catch (error) {
+      console.error('Test execution error:', error);
       return {
-        valid: false,
-        error: error.message
+        passed: false,
+        error: error.message || 'Error ejecutando el test'
       };
     }
-  }
-
-  static async runTests(code, tests) {
-    const response = await fetch('/api/test', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code, tests })
-    });
-
-    const data = await response.json();
-    return data.tests;
   }
 } 

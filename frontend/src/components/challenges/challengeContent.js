@@ -1,51 +1,153 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
-import { challenges } from '@/data/challenges';
 import { TestService } from '@/services/testService';
 import Editor from '@monaco-editor/react';
 import { solidityConfig, editorTheme, editorOptions } from '@/config/monaco';
+import { elizaService } from '@/services/elizaService';
+import useStore from '@/store/useStore';
 
 export default function ChallengeContent() {
   const params = useParams();
   const [code, setCode] = useState('');
   const [testResults, setTestResults] = useState(null);
+  const [evaluation, setEvaluation] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [challenge, setChallenge] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const challenge = challenges.find(c => c.id === parseInt(params.id));
+  useEffect(() => {
+    const loadChallenge = async () => {
+      setIsLoading(true);
+      try {
+        const store = useStore.getState();
+        const area = window.location.pathname.split('/')[2];
+        
+        if (!area) {
+          throw new Error('Área no especificada');
+        }
+
+        const activeChallenge = store.activeChallenge[area];
+        
+        if (!activeChallenge) {
+          const newChallenge = await elizaService.generateNextChallenge(area, 'user');
+          setChallenge(newChallenge);
+          setCode(newChallenge.startingCode || '');
+        } else {
+          setChallenge(activeChallenge);
+          setCode(activeChallenge.startingCode || '');
+        }
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadChallenge();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!challenge) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-text text-xl">No hay reto disponible</div>
+      </div>
+    );
+  }
 
   const runTests = async () => {
     try {
-      const validation = await TestService.validateCode(code);
-      
-      if (!validation.valid) {
+      if (!challenge.testCases || challenge.testCases.length === 0) {
         setTestResults({
           passed: false,
           tests: [{
-            name: 'Validation Error',
+            name: 'Error',
             passed: false,
-            error: validation.error
+            error: 'No hay tests disponibles'
           }]
         });
         return;
       }
 
-      const results = await TestService.runTests(code, challenge.tests);
-      setTestResults({
-        passed: results.every(r => r.passed),
-        tests: results
-      });
+      let attempts = useStore.getState().testAttempts[challenge.id] || 0;
+      if (attempts >= 3) {
+        // Evaluar automáticamente después de 3 intentos
+        handleSubmitSolution();
+        return;
+      }
+
+      const results = await Promise.all(
+        challenge.testCases.map(async test => {
+          try {
+            const result = await TestService.runTest(code, test.code);
+            return {
+              name: test.name,
+              description: test.description,
+              passed: result.passed,
+              error: result.error
+            };
+          } catch (error) {
+            return {
+              name: test.name,
+              passed: false,
+              error: error.message
+            };
+          }
+        })
+      );
+
+      const allPassed = results.every(r => r.passed);
+      setTestResults({ passed: allPassed, tests: results });
+      
+      useStore.getState().incrementTestAttempts(challenge.id);
+
+      if (allPassed) {
+        handleSubmitSolution();
+      }
     } catch (error) {
       console.error('Error running tests:', error);
       setTestResults({
         passed: false,
         tests: [{
-          name: 'Execution Error',
+          name: 'Error',
           passed: false,
           error: error.message
         }]
       });
+    }
+  };
+
+  const handleSubmitSolution = async () => {
+    if (!challenge) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await elizaService.evaluateChallenge(
+        code, 
+        challenge.id,
+        params.area,
+        'user'
+      );
+      setEvaluation(result);
+      
+      useStore.getState().completeChallenge(params.area, challenge.id, result);
+      
+      await elizaService.generateNextChallenge(params.area, 'user');
+      
+    } catch (error) {
+      console.error('Error evaluating challenge:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -58,11 +160,29 @@ export default function ChallengeContent() {
           className="w-[600px]"
         >
           <div className="bg-background p-6 rounded-xl border-1 border-muted h-full overflow-y-auto custom-scrollbar">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="bg-primary text-background px-4 py-2 rounded-lg">
-                #{challenge.id}
+            <div className="flex items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-4">
+                <div className="bg-primary text-background px-4 py-2 rounded-lg">
+                  #{challenge.id}
+                </div>
+                <h1 className="text-text text-2xl font-bold">{challenge.title}</h1>
               </div>
-              <h1 className="text-text text-2xl font-bold">{challenge.title}</h1>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                onClick={async () => {
+                  const area = window.location.pathname.split('/')[2];
+                  useStore.getState().resetArea(area);
+                  const newChallenge = await elizaService.generateNextChallenge(area, 'user');
+                  setChallenge(newChallenge);
+                  setCode(newChallenge.startingCode || '');
+                  setTestResults(null);
+                  setEvaluation(null);
+                }}
+                className="px-4 py-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-all"
+              >
+                Reiniciar Área
+              </motion.button>
             </div>
 
             <div className="space-y-8">
@@ -107,14 +227,18 @@ export default function ChallengeContent() {
                   Requirements
                 </h2>
                 <ul className="space-y-3">
-                  {challenge.requirements.map((req, i) => (
-                    <li key={i} className="flex items-start gap-3 text-textSecondary">
-                      <span className="mt-1 w-5 h-5 bg-background rounded-full flex items-center justify-center text-xs font-medium text-primary border border-primary/20">
-                        {i + 1}
-                      </span>
-                      <span className="leading-relaxed">{req}</span>
-                    </li>
-                  ))}
+                  {challenge.requirements ? (
+                    challenge.requirements.map((req, i) => (
+                      <li key={i} className="flex items-start gap-3 text-textSecondary">
+                        <span className="mt-1 w-5 h-5 bg-background rounded-full flex items-center justify-center text-xs font-medium text-primary border border-primary/20">
+                          {i + 1}
+                        </span>
+                        {req}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-textSecondary">No hay requisitos específicos para este reto.</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -190,7 +314,7 @@ export default function ChallengeContent() {
                   </div>
 
                   <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
-                    {challenge.tests.map((test, i) => (
+                    {challenge.testCases.map((test, i) => (
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 10 }}
@@ -227,6 +351,34 @@ export default function ChallengeContent() {
           </div>
         </motion.div>
       </div>
+
+      {evaluation && (
+        <div className="mt-4 bg-background_secondary p-6 rounded-lg">
+          <h2 className="text-lg font-semibold text-text mb-4">Evaluation Results</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span>Score:</span>
+              <span className="text-primary font-bold">{evaluation.score}/100</span>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">Strengths:</h3>
+              <ul className="list-disc list-inside">
+                {(evaluation.strengths || evaluation.feedback?.successes || []).map((strength, i) => (
+                  <li key={i} className="text-textSecondary">{strength}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">Areas for Improvement:</h3>
+              <ul className="list-disc list-inside">
+                {(evaluation.improvements || evaluation.feedback?.improvements || []).map((improvement, i) => (
+                  <li key={i} className="text-textSecondary">{improvement}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

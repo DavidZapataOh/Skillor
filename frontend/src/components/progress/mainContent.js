@@ -24,32 +24,28 @@ function MainContent() {
   const { areaStats } = useStore();
   const [selectedArea, setSelectedArea] = useState('solidity');
 
-  const areas = Object.entries(areaStats).map(([id, stats]) => ({
-    id,
-    name: id.charAt(0).toUpperCase() + id.slice(1),
-    stars: stats.stars,
-    score: stats.score / 10,
-    positives: stats.completedChallenges
-      .slice(-3)
-      .map(c => c.feedback.successes)
-      .flat()
-      .slice(0, 3),
-    negatives: stats.completedChallenges
-      .slice(-3)
-      .map(c => c.feedback.improvements)
-      .flat()
-      .slice(0, 2),
-    lastChallenges: stats.completedChallenges
+  const getRecentChallenges = (challenges) => {
+    return challenges
       .slice(-5)
       .map(c => ({
-        date: new Date(c.date).toISOString().split('T')[0],
+        date: c.timestamp ? new Date(c.timestamp).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         name: c.id,
         rating: c.score
       }))
-      .reverse()
-  }));
+      .filter(c => c.date && c.name && c.rating);
+  };
 
-  const selectedAreaData = areas.find(a => a.id === selectedArea) || areas[0];
+  const progressData = Object.entries(areaStats).map(([area, stats]) => {
+    const recentScores = getRecentChallenges(stats.completedChallenges || []);
+    return {
+      area: area.charAt(0).toUpperCase() + area.slice(1),
+      stars: stats.stars || 0,
+      recentScores,
+      totalScore: Math.round(stats.score || 0)
+    };
+  });
+
+  const selectedAreaData = progressData.find(a => a.area === selectedArea) || progressData[0];
 
   const renderStars = (count, selected = false) => {
     const stars = [];
@@ -106,32 +102,32 @@ function MainContent() {
       >
         <h2 className="text-text text-xl font-bold mb-6">Progress</h2>
         <div className="grid grid-cols-2 gap-4">
-          {areas.map((area) => (
+          {progressData.map((area) => (
             <motion.button
-              key={area.id}
+              key={area.area}
               whileHover={{ scale: 1.01 }}
-              onClick={() => setSelectedArea(area.id)}
+              onClick={() => setSelectedArea(area.area)}
               className={cn(
                 "w-full flex items-center p-4 rounded-xl border-1 border-muted transition-all",
-                selectedArea === area.id
+                selectedArea === area.area
                   ? "bg-primary text-text"
                   : "bg-background_secondary text-text hover:bg-background_secondary/80"
               )}
             >
               <div className={cn(
                 "flex gap-1 bg-background rounded-lg p-2",
-                selectedArea === area.id
+                selectedArea === area.area
                   ? "bg-background"
                   : "bg-primary"
               )}>
-                {renderStars(area.stars, selectedArea === area.id)}
+                {renderStars(area.stars, selectedArea === area.area)}
               </div>
               <div className="flex-1 text-left pl-4">
-                <span className="font-medium">{area.name}</span>
+                <span className="font-medium">{area.area}</span>
               </div>
               <div className=
                 "px-3 py-1 rounded-lg border border-textSecondary text-textSecondary">
-                <span className="font-semibold">{area.score.toFixed(1)}</span>
+                <span className="font-semibold">{area.totalScore.toFixed(1)}</span>
               </div>
             </motion.button>
           ))}
@@ -146,10 +142,10 @@ function MainContent() {
         >
           <h3 className="text-text text-lg font-bold mb-4">Positive</h3>
           <div className="space-y-3">
-            {selectedAreaData.positives.map((item, index) => (
+            {selectedAreaData.recentScores.filter(c => c.rating > 0).map((item, index) => (
               <div key={index} className="flex items-center gap-3 text-textSecondary">
                 <CheckCircleIcon className="w-5 h-5 text-primary" />
-                <span>{item}</span>
+                <span>{item.name}</span>
               </div>
             ))}
           </div>
@@ -162,10 +158,10 @@ function MainContent() {
         >
           <h3 className="text-text text-lg font-bold mb-4">Negative</h3>
           <div className="space-y-3">
-            {selectedAreaData.negatives.map((item, index) => (
+            {selectedAreaData.recentScores.filter(c => c.rating < 0).map((item, index) => (
               <div key={index} className="flex items-center gap-3 text-textSecondary">
                 <XCircleIcon className="w-5 h-5 text-red-500" />
-                <span>{item}</span>
+                <span>{item.name}</span>
               </div>
             ))}
           </div>
@@ -188,14 +184,14 @@ function MainContent() {
               </div>
               <div className="px-3 py-1 rounded-lg border border-textSecondary text-textSecondary">
                 <span className="font-semibold">
-                  {(selectedAreaData.lastChallenges.reduce((acc, curr) => acc + curr.rating, 0) / 
-                    selectedAreaData.lastChallenges.length / 10).toFixed(1)}
+                  {(selectedAreaData.recentScores.reduce((acc, curr) => acc + curr.rating, 0) / 
+                    selectedAreaData.recentScores.length / 10).toFixed(1)}
                 </span>
               </div>
             </div>
             <div className="h-48 bg-background_secondary rounded-lg p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={selectedAreaData.lastChallenges}>
+                <LineChart data={selectedAreaData.recentScores}>
                   <defs>
                     <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#7FB800" stopOpacity={0.1}/>
@@ -247,7 +243,7 @@ function MainContent() {
             </div>
           </div>
           <div className="space-y-2">
-            {selectedAreaData.lastChallenges.map((challenge, index) => (
+            {selectedAreaData.recentScores.map((challenge, index) => (
               <div
                 key={index}
                 className={cn(

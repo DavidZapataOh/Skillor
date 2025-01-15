@@ -10,6 +10,7 @@ import { withAuth } from '../hoc/withAuth';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import useStore from '@/store/challengeStore';
 import { challenges } from '@/data/challenges';
+import { elizaService } from '@/services/elizaService';
 
 function MainContent() {
   const tokenBalance = useTokenBalance();
@@ -82,13 +83,19 @@ function MainContent() {
     };
   });
 
-  const pendingChallenges = challenges
-    .filter(challenge => {
-      const areaStats = useStore.getState().areaStats[challenge.area];
-      return !areaStats.completedChallenges.some(cc => cc.id === challenge.id);
+  const pendingChallenges = Object.entries(areaStats)
+    .map(([area, stats]) => {
+      const activeChallenge = useStore.getState().activeChallenge[area];
+      if (!activeChallenge) return null;
+      
+      const isCompleted = stats.completedChallenges.some(
+        cc => cc.id === activeChallenge.id
+      );
+      
+      return isCompleted ? null : activeChallenge.title;
     })
-    .slice(0, 4)
-    .map(challenge => challenge.title);
+    .filter(Boolean)
+    .slice(0, 4);
 
   function getDatesInRange(startDate, endDate) {
     const date = new Date(startDate.getTime());
@@ -184,6 +191,58 @@ function MainContent() {
     const saturation = 30 + ((score - 1) / 19) * 70;
     return `hsl(86, ${saturation}%, 36%)`;
   };
+
+  const updateMetrics = async (evaluationResult) => {
+    const { metrics, stars } = evaluationResult;
+    
+    Object.entries(metrics).forEach(([skill, value]) => {
+      const currentScore = calculateSkillScore(skill);
+      const newScore = Math.min(100, currentScore + value);
+      
+      useStore.getState().updateSkillScore(skill, newScore);
+    });
+
+    if (stars > 0) {
+      const currentArea = challenge.area;
+      useStore.getState().addStars(currentArea, stars);
+    }
+
+    const newProgressData = Object.entries(areaStats).map(([area, stats]) => {
+      const recentScores = stats.completedChallenges
+        .slice(-5)
+        .map(challenge => challenge.score);
+        
+      return {
+        area: area.charAt(0).toUpperCase() + area.slice(1),
+        stars: stats.stars,
+        recentScores,
+        totalScore: Math.round(stats.score)
+      };
+    });
+
+    setProgressData(newProgressData);
+
+    const updatedSkillsData = [
+      { name: "Smart Contracts", score: calculateSkillScore("smart_contracts") },
+      { name: "Gas Optimization", score: calculateSkillScore("gas_optimization") },
+      { name: "Security", score: calculateSkillScore("security") },
+      // ... resto de skills
+    ];
+    setSkillsData(updatedSkillsData);
+  };
+
+  useEffect(() => {
+    const unsubscribe = useStore.subscribe(
+      state => state.lastEvaluation,
+      evaluation => {
+        if (evaluation) {
+          updateMetrics(evaluation);
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="p-6 ml-64">

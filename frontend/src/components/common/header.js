@@ -3,6 +3,8 @@ import { FireIcon, CurrencyDollarIcon } from "@heroicons/react/24/solid";
 import AuthButton from "@/config/authButton";
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import useStore from '@/store/challengeStore';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 const StarIcon = ({ className, fill }) => (
   <svg 
@@ -61,17 +63,59 @@ const renderStars = (count) => {
 export default function Header() {
   const tokenBalance = useTokenBalance();
   const { areaStats } = useStore();
+  const router = useRouter();
   
   const averageStars = Object.values(areaStats).reduce(
     (acc, area) => acc + area.stars, 
     0
   ) / Object.keys(areaStats).length;
 
+  const handleReset = async () => {
+    if (confirm('¿Estás seguro? Esto reiniciará todo tu progreso y comenzarás desde cero.')) {
+      useStore.setState({
+        areaStats: {
+          solidity: { stars: 0, score: 0, completedChallenges: [], challenges: [] },
+          security: { stars: 0, score: 0, completedChallenges: [], challenges: [] },
+          zk: { stars: 0, score: 0, completedChallenges: [], challenges: [] },
+          avalanche: { stars: 0, score: 0, completedChallenges: [], challenges: [] }
+        },
+        activeChallenge: {
+          solidity: generateInitialChallenge('solidity'),
+          security: generateInitialChallenge('security'),
+          zk: generateInitialChallenge('zk'),
+          avalanche: generateInitialChallenge('avalanche')
+        },
+        lastEvaluation: null,
+        evaluationHistory: [],
+        skills: {},
+        streak: 0,
+        testAttempts: {}
+      });
+
+      try {
+        const currentArea = window.location.pathname.split('/')[2] || 'solidity';
+        await elizaService.generateNextChallenge(currentArea, 'user');
+        router.push('/dashboard');
+        window.location.reload();
+      } catch (error) {
+        console.error('Error generating initial challenge:', error);
+      }
+    }
+  };
+
   return (
     <header className="ml-64 flex justify-between items-center px-6 py-4 bg-background shadow-lg border-b border-muted relative z-10">
       <h1 className="text-lg font-bold text-primary">SKILLOR</h1>
       
       <div className="flex items-center gap-12">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          onClick={handleReset}
+          className="px-4 py-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-all"
+        >
+          Reset Progress
+        </motion.button>
+
         <div className="flex items-center bg-primary p-2 rounded-lg">
           <div className="flex gap-0.5">
             {renderStars(averageStars)}
